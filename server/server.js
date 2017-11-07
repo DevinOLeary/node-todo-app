@@ -22,6 +22,19 @@ app.post('/todos', (req, res) => {
   });
 });
 
+app.get('/todos', (req, res) => {
+  Todo.find().then((todos) => {
+    res.send({todos});//by passing the res an object, you're allowing freedom to add other datatypes to the response.
+
+  }, (err) => {
+    res.status(400).send(err);
+  });
+});
+
 app.listen(3000, () => {
   console.log('Started on port 3000');
 });
+
+module.exports = {
+  app
+};

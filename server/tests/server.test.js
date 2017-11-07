@@ -4,9 +4,17 @@ const expect = require('expect')
 const {app} = require('../server');
 const {Todo} = require('../models/todo');
 
+const todos = [{
+  text: 'First test todo'
+}, {
+  text: 'Second test todo'
+}];
+
 
 beforeEach((done) => {
-  Todo.remove({}).then(() => done());
+  Todo.remove({}).then(() => {
+    return Todo.insertMany(todos);
+  }).then(() => done());
 }); //befor each test case, the Todo collection will be cleared out
 
 describe('Post /todos', () => { //describer block
@@ -25,7 +33,7 @@ describe('Post /todos', () => { //describer block
         return done(err); //if error, call done with the error
       }
 
-      Todo.find().then((todos) => { //if response, go into Todo collection and pass assertions
+      Todo.find({text}).then((todos) => { //if response, go into Todo collection and pass assertions
         expect(todos.length).toBe(1); //make sure length is greater than 1
         expect(todos[0].text).toBe(text); //make sure content is equal to var sent
         done();//done
@@ -46,10 +54,22 @@ describe('Post /todos', () => { //describer block
       }
 
       Todo.find().then((todos) => {
-        expect(todos.length).toBe(0);
+        expect(todos.length).toBe(2);
         done();
       }).catch((err) => done(err));
     });
   });
 
 });
+
+describe('GET /todos', () => {
+  it('should get all todos', (done) => {
+    request(app)
+    .get('/todos')
+    .expect(200)
+    .expect((res) => {
+      expect(res.body.todos.length).toBe(2)
+    })
+    .end(done);
+  })
+})

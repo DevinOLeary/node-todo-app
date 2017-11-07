@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const {ObjectID} = require('mongodb');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -62,6 +63,35 @@ app.delete('/todos/:id', (req, res) => {
     res.status(404).send();
   });
 });
+
+app.patch('/todos/:id', (req,res) => {
+  let id = req.params.id;
+  let body = _.pick(req.body, ['text', 'completed']); //pick from lodash allows you to signify which properties you want to make available to the user through the varible.
+  if(!ObjectID.isValid(id)){
+    return res.status(404).send();
+  }
+
+  if(_.isBoolean(body.completed) && body.completed) {
+    body.completedAt = new Date().getTime();
+  } else {
+    body.completed = false;
+    body.completedAt = null;
+  } //update completedAt based on the competed property
+
+  Todo.findByIdAndUpdate(id, {
+    $set: body
+  }, {
+    new: true
+  }).then((todo) => {
+    if(!todo){
+      res.status(404).send();
+    }
+
+    res.send({todo});
+  }).catch((err) => {
+    res.status(400).send();
+  })
+})
 
 app.listen(port, () => {
   console.log(`Started up at port ${port}`);

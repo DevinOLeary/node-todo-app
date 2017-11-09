@@ -4,6 +4,7 @@ const _ = require('lodash');
 const {ObjectID} = require('mongodb');
 const express = require('express');
 const bodyParser = require('body-parser');
+const bcrypt = require('bcryptjs');
 
 
 const {mongoose} = require('./db/mongoose');
@@ -96,6 +97,7 @@ app.patch('/todos/:id', (req,res) => {
   });
 });
 
+// POST /users
 app.post('/users', (req, res) => {
   let body = _.pick(req.body, ['email', 'password']);
   let user = new User(body);
@@ -109,9 +111,27 @@ app.post('/users', (req, res) => {
   })
 });
 
+// GET /users/me
 app.get('/users/me', authenticate, (req, res) => {
   res.status(200).send(req.user);
 });
+
+// POST /users/login {email, password}
+app.post('/users/login', (req, res) => {
+  let body = _.pick(req.body, ['email', 'password']);
+
+  User.findByCredentials(body.email, body.password).then((user) => {
+    return user.generateAuthToken().then((token) => {
+      res.header('x-auth', token).send(user);
+    });
+  }).catch((e) => {
+    res.status(400).send();
+  });
+});
+
+
+
+
 
 app.listen(port, () => {
   console.log(`Started up at port ${port}`);
